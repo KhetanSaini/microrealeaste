@@ -1,0 +1,115 @@
+---
+description: errors rules 
+globs: 
+alwaysApply: false
+---
+🧠 Rule Behavior
+Read Error Details:
+
+Start by reading the Dart Analyzer error message and its file location (line & column).
+
+Classify the error into one of these types:
+
+Syntax
+
+Type mismatch
+
+Null safety
+
+Unused imports/variables
+
+Incorrect import paths
+
+Widget misuse
+
+Dependency issues (e.g. unresolved classes)
+
+Check File Dependencies:
+
+Identify all imports used in the file.
+
+Read each imported file and understand class/function/enum being used.
+
+If a symbol is undefined:
+
+Locate its origin by searching the import list.
+
+If not present, suggest adding the correct import or creating the missing class/function if appropriate.
+
+Resolve Based on Context:
+
+Respect existing architecture and file roles (e.g., model, widget, service, db).
+
+Never assume random fixes. Instead:
+
+If the file depends on another, resolve by adjusting to that file’s contract.
+
+For custom classes/functions, match parameters, return types, and naming conventions.
+
+Fix Strategically:
+
+Syntax errors → Apply standard Dart formatting.
+
+Type errors → Ensure types match across method signatures, variables, and returns.
+
+Null safety → Use ?, !, or required smartly based on real use.
+
+Missing classes or functions → Create stubs only if it’s obvious from usage.
+
+Widget/layout issues → Match expected constructor patterns.
+
+Enhance and Document:
+
+After fixing, if you find unclear logic or missing comments:
+
+Add short doc comments (///) to new/modified functions and classes.
+
+Where logic is repeated or inefficient, refactor lightly.
+
+Log What Was Done:
+
+In internal AI memory or commit message format:
+
+Mention:
+
+Files read
+
+Errors found
+
+Fixes applied
+
+Any assumptions made
+
+💡 Example Flow:
+Error: The method 'toJson' isn't defined for the class 'TenantModel'.
+
+Action Steps:
+
+Read file where error occurred.
+
+See that TenantModel is imported from models/tenant.dart.
+
+Open tenant.dart → See TenantModel class lacks toJson.
+
+Based on other models or usage pattern, generate:
+
+dart
+Copy
+Edit
+Map<String, dynamic> toJson() {
+  return {
+    'id': id,
+    'name': name,
+    'phone': phone,
+  };
+}
+Add it and recheck analyzer status.
+
+🛠️ Rule Settings
+Property	Value
+Applies To	Dart/Flutter projects
+Priority	🔴 Critical
+Recursive Depth	2 levels of imports
+Safety Level	🟢 Safe (no destructive ops)
+
+Commit Style	fix: analyzer error in <filename>

@@ -1,0 +1,120 @@
+---
+description: Make safe, contextual, and consistent updates to existing Dart/Flutter files by reading and understanding the file first, identifying the structure and dependencies, and applying appropriate changes.
+globs: 
+alwaysApply: false
+---
+🧠 Rule Behavior
+Read and Understand the File First
+
+Parse the file entirely before applying any changes.
+
+Understand:
+
+Class and function hierarchy
+
+Imports and dependencies
+
+File’s role in the project (widget, model, service, page, etc.)
+
+Naming conventions and existing logic
+
+Analyze What Needs to Change
+
+Identify the requested or required modification:
+
+Add a new field/method/parameter
+
+Modify widget tree layout
+
+Refactor method or class
+
+Inject new service, provider, or dependency
+
+Update imports or annotations
+
+Locate the exact section (by class, method, or identifier)
+
+Check Dependencies and Relations
+
+If the change affects related files (e.g. a model, DB table, widget):
+
+Open and read the related file.
+
+Sync updates across all affected files (e.g., TenantModel field added → update Drift table, form, and JSON methods).
+
+Apply the Update Safely
+
+Update in-place without disturbing unrelated code.
+
+Maintain:
+
+Consistent formatting (indentation, spacing, brackets)
+
+Logical order (constructors, build methods, fields)
+
+Import structure (grouped and alphabetized if used)
+
+Use comments if the logic is auto-generated or significantly changed.
+
+Preserve Functionality and State
+
+Avoid breaking state in StatefulWidgets.
+
+Respect existing lifecycle methods (initState, dispose).
+
+If a method is overridden, preserve super calls if required.
+
+Update Related Code if Needed
+
+If a method signature changes, propagate to:
+
+Calling functions
+
+Provider definitions
+
+Test cases (if present)
+
+If a variable or widget is renamed, rename consistently across file.
+
+Log What Was Updated
+
+In logs or memory, record:
+
+What was updated (file, class, method, widget)
+
+Why it was changed
+
+If other files were touched
+
+Any assumptions made
+
+🔁 Example Flow:
+Task: Add a new field String emergencyContact to TenantModel.
+
+Action Steps:
+
+Open tenant_model.dart → Identify TenantModel class and constructor.
+
+Add new field:
+
+dart
+Copy
+Edit
+final String emergencyContact;
+Update constructor, fromJson, and toJson.
+
+Check and update tenant_table.dart Drift table.
+
+Open tenant_form.dart, add new TextField.
+
+Ensure field is required or optional depending on null safety setup.
+
+🛠️ Rule Settings
+Property	Value
+Applies To	Dart/Flutter source files
+Priority	🔴 High
+File Access	Must read entire file before update
+Safe Scope	Yes (no destructive edits)
+Refactor Support	Yes (rename, retype, restructure)
+
+Commit Style	refactor: update <filename> with <change>

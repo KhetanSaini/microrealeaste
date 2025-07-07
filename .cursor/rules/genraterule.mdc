@@ -1,0 +1,134 @@
+---
+description: rules for code gernation or building  anything
+globs: 
+alwaysApply: false
+---
+ Rule Behavior
+Read Current File and Intent
+
+Start from the file where the code generation is triggered or requested.
+
+Understand what kind of code is needed:
+
+Widget (UI)
+
+Model
+
+Database logic (Drift)
+
+Service or Controller
+
+State (Riverpod/Provider)
+
+Navigation route
+
+Extract any class/function name hints, variables, annotations, etc.
+
+Check Existing Dependencies & Context
+
+Read relevant existing files such as:
+
+Models (e.g. for forms or lists)
+
+Widgets (for consistent UI structure)
+
+Drift table definitions (for database logic)
+
+Router definitions (for page generation)
+
+Any referenced constants, mixins, or themes
+
+Extract:
+
+Naming conventions
+
+Code style (e.g., constructor pattern, spacing)
+
+Data types used
+
+Generate Based on Best Fit & Patterns
+
+Use the surrounding context (imports, classes, data flow) to generate:
+
+UI → StatelessWidget/StatefulWidget with matching constructor/params
+
+Models → Match from table structure or JSON sample
+
+Drift table classes → From model or DB schema
+
+Riverpod providers → Match existing patterns (e.g. final myProvider = ...)
+
+Match the following:
+
+File naming style (snake_case.dart)
+
+Class style (PascalCase)
+
+Method signature format
+
+Wire It Up Automatically
+
+If a widget is generated, insert an import line into the relevant page.
+
+If a model is created, add it to related services or DB.
+
+If a route/page is generated, add to routing table (e.g., GoRouter).
+
+Enhance with Documentation
+
+Add /// comments on all new classes/functions.
+
+Add @override or @immutable where needed.
+
+If generating forms or list views, label sections clearly with comment blocks.
+
+Report What Was Created
+
+In AI memory or log format, record:
+
+Files read
+
+New file(s) created
+
+Class/function names
+
+Dependencies added
+
+Entry points or hooks updated
+
+🧱 Example Flow:
+Task: Generate a new page called AddTenantPage.
+
+Action Steps:
+
+Read routing config → Find it uses GoRouter.
+
+Read existing TenantModel, detect fields: name, phone, email.
+
+Generate add_tenant_page.dart with:
+
+StatefulWidget for form
+
+Text fields for each model field
+
+Submit button hooked to TenantService
+
+during the imports dont make them like this import '../../../widgets/scaffold/main_root_scaffold.dart';  insated it shdorld be full imports  import 'package:microrealeaste//widgets/scaffold/main_root_scaffold'; full path should be there
+
+Add GoRoute entry:
+
+dart
+Copy
+Edit
+GoRoute(
+  path: '/add-tenant',
+  builder: (context, state) => AddTenantPage(),
+);
+Add import to navigation bar/menu if needed.
+🛠️ Rule Settings
+Property	Value
+Applies To	Dart/Flutter project codegen
+Priority	🟡 Medium
+Generation Trigger	File placeholder, request, or route
+File Creation Style	Scoped (new file per class)
+Commit Style	feat: generate <feature> page/widget/model

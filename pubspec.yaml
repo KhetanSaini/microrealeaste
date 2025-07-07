@@ -1,0 +1,191 @@
+name: microrealeaste
+description: Flutter Mobile App Template
+
+# The following line prevents the package from being accidentally published to
+# pub.dev using `flutter pub publish`. This is preferred for private packages.
+publish_to: 'none' # Remove this line if you wish to publish to pub.dev
+
+# The following defines the version and build number for your application.
+# A version number is three numbers separated by dots, like 1.2.43
+# followed by an optional build number separated by a +.
+# Both the version and the builder number may be overridden in flutter
+# build by specifying --build-name and --build-number, respectively.
+# In Android, build-name is used as versionName while build-number used as versionCode.
+# Read more about Android versioning at https://developer.android.com/studio/publish/versioning
+# In iOS, build-name is used as CFBundleShortVersionString while build-number is used as CFBundleVersion.
+# Read more about iOS versioning at
+# https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
+# In Windows, build-name is used as the major, minor, and patch parts
+# of the product and file versions while build-number is used as the build suffix.
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.7.0
+
+# Dependencies specify other packages that your package needs in order to work.
+# To automatically upgrade your package dependencies to the latest versions
+# consider running `flutter pub upgrade --major-versions`. Alternatively,
+# dependencies can be manually updated by changing the version numbers below to
+# the latest version available on pub.dev. To see which dependencies have newer
+# versions available, run `flutter pub outdated`.
+dependencies:
+  flutter:
+    sdk: flutter
+
+  # Localization
+  # Standard flutter controls (e.g. back button's tooltip) will also pick the right locale
+  flutter_localizations:
+    sdk: flutter
+  slang: 4.5.0 # Efficient i18n solution with strong typing
+  slang_flutter: 4.5.0 # Flutter bindings for slang
+
+  # UI Components & Styling
+  cupertino_icons: 1.0.8 # iOS style icons
+  flutter_svg: 2.0.17 # SVG rendering support
+  gap: 3.0.1 # Convenient spacing widgets
+  google_fonts: 6.2.1 # Easy integration of Google Fonts
+  flutter_screenutil: 5.9.3 # Responsive UI utilities
+  flutter_native_splash: 2.4.5 # Native splash screen configuration
+  flutter_animate: 4.5.2 # Easy-to-use animations
+  defer_pointer: 0.0.2 # Better touch event handling
+  cached_network_image: 3.4.1 # Efficient network image caching and loading
+
+  # State Management & DI
+  hooks_riverpod: 2.6.1 # State management with dependency injection
+  flutter_hooks: 0.21.2 # Reusable stateful logic
+  riverpod_annotation: 2.6.1 # Code generation for Riverpod
+
+  # Routing & Navigation
+  go_router: 14.8.1 # Declarative routing solution
+
+  # Forms & Validation
+  reactive_forms: 17.0.1 # Reactive form handling
+  form_builder_validators: 11.1.2 # Form validation utilities
+  reactive_phone_form_field: 5.0.0 # Phone number input & validation
+
+  # Networking & Storage
+  dio: 5.8.0+1 # HTTP client
+  flutter_secure_storage: 9.2.4 # Secure storage for sensitive data
+  shared_preferences: 2.5.2 # Key-value storage
+
+  # Database
+  drift: ^2.20.3 # SQLite database with type-safe queries
+  sqlite3_flutter_libs: ^0.5.24 # SQLite native libraries
+  path_provider: ^2.1.4 # File system paths
+  path: ^1.9.0 # Path manipulation utilities
+
+  # Utilities
+  uuid: ^4.5.1 # UUID generation
+  intl: ^0.20.2 # Internationalization and date formatting
+  image_picker: ^1.1.2 # Image selection from gallery/camera
+  file_picker: ^8.1.2 # File selection
+  url_launcher: ^6.3.1 # Launch URLs and external apps
+
+  # Theming & Styling
+  theme_tailor_annotation: # Type-safe theme management
+    git:
+      url: https://github.com/Iteo/theme_tailor.git
+      path: packages/theme_tailor_annotation
+      ref: main
+  awesome_extensions: 2.0.20 # Useful Flutter extensions
+
+  # Data Modeling & Serialization
+  freezed_annotation: 3.0.0 # Immutable model generation
+  json_annotation: 4.9.0 # JSON serialization
+  collection: 1.19.1 # Additional collection types and utilities
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  # The "flutter_lints" package below contains a set of recommended lints to
+  # encourage good coding practices. The lint set provided by the package is
+  # activated in the `analysis_options.yaml` file located at the root of your
+  # package. See that file for information about deactivating specific lint
+  # rules and activating additional ones.
+  flutter_lints: 5.0.0 # Recommended Flutter lints
+  custom_lint: 0.7.5 # Custom lint rules
+  riverpod_lint: 2.6.5 # Riverpod-specific lints
+
+  # Code Generation
+  build_runner: 2.4.15 # Code generation orchestration
+  slang_build_runner: 4.5.0 # i18n code generation
+  riverpod_generator: 2.6.5 # Riverpod code generation
+  theme_tailor: # Theme code generation
+    git:
+      url: https://github.com/Iteo/theme_tailor.git
+      path: packages/theme_tailor
+      ref: main
+  freezed: 3.0.3 # Data class generation
+  json_serializable: 6.9.4 # JSON serialization generation
+  flutter_gen_runner: 5.10.0 # Asset code generation
+  drift_dev: ^2.20.3 # Drift code generation
+
+  # Development Tools
+  flutter_launcher_icons: 0.14.3 # App icon generation
+  change_app_package_name: 1.5.0 # Package name modification
+  rename: 3.0.2 # Project renaming utility
+
+  # Git Hooks & Commit Management
+  commitlint_cli: 0.8.1 # Commit message linting
+  husky: 0.1.7 # Git hooks management
+  lint_staged: 0.5.1 # Pre-commit file linting
+  yaml: 3.1.3 # YAML parsing for custom scripts
+
+dependency_overrides:
+  # TODO: Workaround before theme_tailor ^3.0.2 supporting analyzer 7.0.0 and source_gen 2.0.0 is published
+  theme_tailor:
+    git:
+      url: https://github.com/Iteo/theme_tailor.git
+      path: packages/theme_tailor
+      ref: main
+  theme_tailor_annotation:
+    git:
+      url: https://github.com/Iteo/theme_tailor.git
+      path: packages/theme_tailor_annotation
+      ref: main
+
+# For information on the generic Dart part of this file, see the
+# following page: https://dart.dev/tools/pub/pubspec
+
+# The following section is specific to Flutter packages.
+flutter:
+  # The following line ensures that the Material Icons font is
+  # included with your application, so that you can use the icons in
+  # the material Icons class.
+  uses-material-design: true
+
+  # To add assets to your application, add an assets section, like this:
+  assets:
+    #- assets/images/
+    - assets/icons/
+    - assets/i18n/
+
+  # An image asset can refer to one or more resolution-specific "variants", see
+  # https://flutter.dev/to/resolution-aware-images
+
+  # For details regarding adding assets from package dependencies, see
+  # https://flutter.dev/to/asset-from-package
+
+  # To add custom fonts to your application, add a fonts section here,
+  # in this "flutter" section. Each entry in this list should have a
+  # "family" key with the font family name, and a "fonts" key with a
+  # list giving the asset and other descriptors for the font. For
+  # example:
+  # fonts:
+  #   - family: Schyler
+  #     fonts:
+  #       - asset: fonts/Schyler-Regular.ttf
+  #       - asset: fonts/Schyler-Italic.ttf
+  #         style: italic
+  #   - family: Trajan Pro
+  #     fonts:
+  #       - asset: fonts/TrajanPro.ttf
+  #       - asset: fonts/TrajanPro_Bold.ttf
+  #         weight: 700
+  #
+  # For details regarding fonts from package dependencies,
+  # see https://flutter.dev/to/font-from-package
+
+lint_staged:
+  "{lib,test}/**.dart": dart format
