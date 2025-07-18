@@ -1,3 +1,5 @@
+import 'package:microrealeaste/database/models/lease.dart';
+
 class Tenant {
   final String id;
   final String name;
@@ -7,6 +9,8 @@ class Tenant {
   final double rentAmount;
   final DateTime moveInDate;
   final String? profileImage;
+  /// List of leases for this tenant
+  final List<Lease> leases;
 
   Tenant({
     required this.id,
@@ -17,6 +21,7 @@ class Tenant {
     required this.rentAmount,
     required this.moveInDate,
     this.profileImage,
+    this.leases = const [],
   });
 
   Map<String, dynamic> toJson() {
@@ -29,6 +34,7 @@ class Tenant {
       'rentAmount': rentAmount,
       'moveInDate': moveInDate.toIso8601String(),
       'profileImage': profileImage,
+      'leases': leases.map((l) => l.toJson()).toList(),
     };
   }
 
@@ -42,6 +48,7 @@ class Tenant {
       rentAmount: json['rentAmount'].toDouble(),
       moveInDate: DateTime.parse(json['moveInDate']),
       profileImage: json['profileImage'],
+      leases: (json['leases'] as List<dynamic>? ?? []).map((l) => Lease.fromJson(l as Map<String, dynamic>)).toList(),
     );
   }
 
@@ -54,6 +61,7 @@ class Tenant {
     double? rentAmount,
     DateTime? moveInDate,
     String? profileImage,
+    List<Lease>? leases,
   }) {
     return Tenant(
       id: id ?? this.id,
@@ -64,6 +72,7 @@ class Tenant {
       rentAmount: rentAmount ?? this.rentAmount,
       moveInDate: moveInDate ?? this.moveInDate,
       profileImage: profileImage ?? this.profileImage,
+      leases: leases ?? this.leases,
     );
   }
 }

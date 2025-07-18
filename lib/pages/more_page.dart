@@ -3,6 +3,10 @@ import 'package:microrealeaste/widgets/framework_page.dart';
 import 'package:microrealeaste/widgets/custom_buttons.dart';
 import 'package:microrealeaste/pages/settings_page.dart';
 import 'package:microrealeaste/pages/rent_payments_page.dart';
+import 'package:microrealeaste/pages/organization_management_page.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:microrealeaste/providers/auth_provider.dart';
+import 'package:microrealeaste/database/models/user.dart';
 
 PageRouteBuilder _fadeRoute(Widget page) {
   return PageRouteBuilder(
@@ -17,11 +21,17 @@ PageRouteBuilder _fadeRoute(Widget page) {
   );
 }
 
-class MorePage extends StatelessWidget {
+class MorePage extends ConsumerWidget {
   const MorePage({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final user = ref.watch(currentUserProvider);
+    final isOrgAdmin = user != null && (
+      user.role == UserRole.superAdmin ||
+      user.rolesByOrg.values.contains(UserRole.organizationAdmin) ||
+      user.role == UserRole.organizationAdmin
+    );
     return FrameworkPage(
       title: 'More',
       slivers: [
@@ -30,6 +40,15 @@ class MorePage extends StatelessWidget {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 32),
             child: Column(
               children: [
+                if (isOrgAdmin)
+                  CustomActionButton(
+                    label: 'Organization Management',
+                    icon: Icons.business,
+                    onTap: () => Navigator.of(context).push(
+                      MaterialPageRoute(builder: (_) => const OrganizationManagementPage()),
+                    ),
+                  ),
+                if (isOrgAdmin) const SizedBox(height: 24),
                 CustomActionButton(
                   label: 'Settings & Customization',
                   icon: Icons.settings,

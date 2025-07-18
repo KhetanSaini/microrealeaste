@@ -4,6 +4,7 @@ import 'package:microrealeaste/widgets/dashboard_overview.dart';
 import 'package:microrealeaste/providers/app_providers.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:microrealeaste/widgets/framework_page.dart';
+import 'package:microrealeaste/providers/auth_provider.dart';
 
 class LanlordHomePage extends HookConsumerWidget {
   const LanlordHomePage({super.key});
@@ -16,6 +17,13 @@ class LanlordHomePage extends HookConsumerWidget {
     final properties = ref.watch(propertiesProvider);
     final rentPayments = ref.watch(rentPaymentsProvider);
     final maintenanceRequests = ref.watch(maintenanceRequestsProvider);
+    final user = ref.watch(currentUserProvider);
+    final currentOrgId = user?.currentOrganizationId;
+    final currentRole = currentOrgId != null ? user?.rolesByOrg[currentOrgId] : null;
+    final canManageProperties = user?.canManageProperties ?? false;
+    final canManageTenants = user?.canManageTenants ?? false;
+    final canManagePayments = user?.canManagePayments ?? false;
+    final canManageMaintenance = user?.canManageMaintenance ?? false;
 
     // Set isLoadingProvider to false when all data is loaded
     useEffect(() {
@@ -43,6 +51,20 @@ class LanlordHomePage extends HookConsumerWidget {
                 ),
               ),
             ],
+          ),
+        ),
+      );
+    }
+
+    // Role-based access control: show dashboard only if user has at least one management permission
+    if (!(canManageProperties || canManageTenants || canManagePayments || canManageMaintenance)) {
+      return Scaffold(
+        backgroundColor: theme.colorScheme.surface,
+        body: Center(
+          child: Text(
+            'You do not have access to management features in this organization.',
+            style: theme.textTheme.titleMedium,
+            textAlign: TextAlign.center,
           ),
         ),
       );

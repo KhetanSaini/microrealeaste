@@ -283,16 +283,93 @@ class DataService {
     // Sample users
     final sampleUsers = [
       User(
+        id: 'superadmin-1',
+        email: 'superadmin@microrealestate.demo',
+        firstName: 'Alice',
+        lastName: 'SuperAdmin',
+        role: UserRole.superAdmin,
+        organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.superAdmin},
+        isActive: true,
+        emailVerified: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 400)),
+        updatedAt: DateTime.now(),
+      ),
+      User(
+        id: 'orgadmin-1',
+        email: 'orgadmin@microrealestate.demo',
+        firstName: 'Bob',
+        lastName: 'OrgAdmin',
+        role: UserRole.organizationAdmin,
+        organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.organizationAdmin},
+        isActive: true,
+        emailVerified: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 350)),
+        updatedAt: DateTime.now(),
+      ),
+      User(
         id: 'landlord-1',
         email: 'landlord@microrealestate.demo',
         firstName: 'John',
         lastName: 'Landlord',
-        phoneNumber: '(555) 111-1111',
         role: UserRole.landlord,
         organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.landlord},
         isActive: true,
         emailVerified: true,
         createdAt: DateTime.now().subtract(const Duration(days: 365)),
+        updatedAt: DateTime.now(),
+      ),
+      User(
+        id: 'manager-1',
+        email: 'manager@microrealestate.demo',
+        firstName: 'Carol',
+        lastName: 'Manager',
+        role: UserRole.propertyManager,
+        organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.propertyManager},
+        isActive: true,
+        emailVerified: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 300)),
+        updatedAt: DateTime.now(),
+      ),
+      User(
+        id: 'tenant-1',
+        email: 'tenant@microrealestate.demo',
+        firstName: 'David',
+        lastName: 'Tenant',
+        role: UserRole.tenant,
+        organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.tenant},
+        isActive: true,
+        emailVerified: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 250)),
+        updatedAt: DateTime.now(),
+      ),
+      User(
+        id: 'maintenance-1',
+        email: 'maintenance@microrealestate.demo',
+        firstName: 'Eve',
+        lastName: 'Maintenance',
+        role: UserRole.maintenanceStaff,
+        organizationId: sampleOrganization.id,
+        organizationIds: [sampleOrganization.id],
+        currentOrganizationId: sampleOrganization.id,
+        rolesByOrg: {sampleOrganization.id: UserRole.maintenanceStaff},
+        isActive: true,
+        emailVerified: true,
+        createdAt: DateTime.now().subtract(const Duration(days: 200)),
         updatedAt: DateTime.now(),
       ),
     ];
@@ -400,11 +477,13 @@ class DataService {
   // User CRUD operations
   static List<User> get users => List.from(_users);
 
+  /// Add a new user to the system
   static Future<void> addUser(User user) async {
     _users.add(user);
     await StorageService.saveUsers(_users);
   }
 
+  /// Update an existing user
   static Future<void> updateUser(User user) async {
     final index = _users.indexWhere((u) => u.id == user.id);
     if (index != -1) {
@@ -473,6 +552,11 @@ class DataService {
       _organizations[index] = organization;
       await StorageService.saveOrganizations(_organizations);
     }
+  }
+
+  static Future<void> deleteOrganization(String organizationId) async {
+    _organizations.removeWhere((o) => o.id == organizationId);
+    await StorageService.saveOrganizations(_organizations);
   }
 
   // Additional helper methods

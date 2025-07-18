@@ -1,12 +1,22 @@
+import 'dart:convert';
+import 'dart:io';
+import 'package:file_picker/file_picker.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:microrealeaste/widgets/color_picker_widget.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
+import 'package:intl/intl.dart';
+import 'package:microrealeaste/database/backup_service.dart';
 import 'package:microrealeaste/database/data_service.dart';
 import 'package:microrealeaste/providers/auth_provider.dart';
 import 'package:microrealeaste/providers/theme_provider.dart';
+import 'package:microrealeaste/widgets/color_picker_widget.dart';
 import 'package:microrealeaste/widgets/framework_page.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:share_plus/share_plus.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:url_launcher/url_launcher.dart';
+import 'package:microrealeaste/pages/user_profile_page.dart';
 
 class SettingsPage extends ConsumerStatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -317,35 +327,26 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   Widget _buildAccountOptions() {
-    final theme = Theme.of(context);
-    final currentUser = ref.watch(currentUserProvider);
-    
+    final user = ref.watch(currentUserProvider);
+    if (user == null) return const SizedBox.shrink();
     return Card(
       elevation: 0,
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: BorderSide(color: theme.colorScheme.outline.withOpacity(0.1)),
+        side: BorderSide(color: Theme.of(context).colorScheme.outline.withOpacity(0.1)),
       ),
       child: Column(
         children: [
-          if (currentUser != null)
-            ListTile(
-              leading: CircleAvatar(
-                backgroundColor: theme.colorScheme.primary,
-                child: Text(
-                  currentUser.firstName[0].toUpperCase(),
-                  style: TextStyle(
-                    color: theme.colorScheme.onPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-              title: Text(currentUser.fullName),
-              subtitle: Text(currentUser.email),
-              trailing: const Icon(Icons.chevron_right),
-              onTap: _showProfileDialog,
+          ListTile(
+            leading: const Icon(Icons.person),
+            title: const Text('Profile'),
+            subtitle: const Text('Edit your profile and preferences'),
+            trailing: const Icon(Icons.chevron_right),
+            onTap: () => Navigator.of(context).push(
+              MaterialPageRoute(builder: (_) => const UserProfilePage()),
             ),
-          if (currentUser != null) const Divider(height: 1),
+          ),
+          const Divider(height: 1),
           ListTile(
             leading: Icon(Icons.logout, color: Colors.red.shade600),
             title: Text('Sign Out', style: TextStyle(color: Colors.red.shade600)),
@@ -431,69 +432,139 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
+  void _showLoadingDialog(String message) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        content: Row(
+          children: [
+            const CircularProgressIndicator(),
+            const SizedBox(width: 16),
+            Text(message),
+          ],
+        ),
+      ),
+    );
+  }
+
   void _backupData() async {
+    if (!mounted) return;
+    _showLoadingDialog('Creating backup...');
+
     try {
-      // Show loading
-      showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (context) => const AlertDialog(
-          content: Row(
-            children: [
-              CircularProgressIndicator(),
-              SizedBox(width: 16),
-              Text('Creating backup...'),
-            ],
-          ),
-        ),
-      );
+      final jsonString = await BackupService.createBackupJson();
+      final fileName = 'microrealeaste_backup_${DateFormat('yyyy-MM-dd_HH-mm').format(DateTime.now())}.json';
 
-      // Simulate backup process
-      await Future.delayed(const Duration(seconds: 2));
+      if (kIsWeb || Platform.isWindows || Platform.isMacOS || Platform.isLinux) {
+        // Use file_picker for desktop and web
+        final result = await FilePicker.platform.saveFile(
+          dialogTitle: 'Save your backup file',
+          fileName: fileName,
+          bytes: utf8.encode(jsonString),
+        );
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(result != null ? 'Backup saved successfully!' : 'Backup canceled.'),
+              backgroundColor: result != null ? Colors.green : Colors.orange,
+            ),
+          );
+        }
+      } else {
+        // Use share_plus for mobile
+        final tempDir = await getTemporaryDirectory();
+        final file = File('${tempDir.path}/$fileName');
+        await file.writeAsString(jsonString);
 
-      Navigator.pop(context); // Close loading dialog
-
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Backup created successfully!'),
-          backgroundColor: Colors.green,
-        ),
-      );
+        if (mounted) {
+          Navigator.pop(context); // Close loading dialog
+          final box = context.findRenderObject() as RenderBox?;
+          Share.shareXFiles(
+            [XFile(file.path, mimeType: 'application/json')],
+            subject: 'MicroRealEstate Backup',
+            sharePositionOrigin: box!.localToGlobal(Offset.zero) & box.size,
+          );
+        }
+      }
     } catch (e) {
-      Navigator.pop(context); // Close loading dialog
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Backup failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Backup failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
-  void _restoreData() {
-    showDialog(
+  void _restoreData() async {
+    final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
         title: const Text('Restore Data'),
-        content: const Text('This will replace all current data with the backup. This action cannot be undone.'),
+        content: const Text('This will replace all current data with the backup. This action cannot be undone. Are you sure?'),
         actions: [
           TextButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: () => Navigator.pop(context, false),
             child: const Text('Cancel'),
           ),
           ElevatedButton(
-            onPressed: () async {
-              Navigator.pop(context);
-              // Simulate restore process
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(content: Text('Restore functionality coming soon')),
-              );
-            },
+            onPressed: () => Navigator.pop(context, true),
             child: const Text('Restore'),
           ),
         ],
       ),
     );
+
+    if (confirmed != true) return;
+
+    try {
+      final result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['json'],
+      );
+
+      if (result == null || result.files.single.path == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Restore canceled.'), backgroundColor: Colors.orange),
+          );
+        }
+        return;
+      }
+
+      if (!mounted) return;
+      _showLoadingDialog('Restoring data...');
+
+      final file = File(result.files.single.path!);
+      final jsonString = await file.readAsString();
+
+      await BackupService.restoreFromBackup(jsonString);
+
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Data restored successfully!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        Navigator.pop(context); // Close loading dialog
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Restore failed: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
   }
 
   void _clearAllData() {
@@ -511,16 +582,15 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
             style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
             onPressed: () async {
               Navigator.pop(context);
-
-              // Clear all data
               await DataService.clearAllData();
-
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('All data cleared successfully'),
-                  backgroundColor: Colors.orange,
-                ),
-              );
+              if (mounted) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('All data cleared successfully'),
+                    backgroundColor: Colors.orange,
+                  ),
+                );
+              }
             },
             child: const Text('Clear All', style: TextStyle(color: Colors.white)),
           ),
@@ -562,16 +632,49 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
     );
   }
 
+  Future<void> _launchUri(Uri uri) async {
+    if (!await launchUrl(uri)) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Could not launch $uri'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
+    }
+  }
+
   void _sendFeedback() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Feedback feature coming soon!')),
+    final Uri emailLaunchUri = Uri(
+      scheme: 'mailto',
+      path: 'support@microrealeaste.com',
+      query: 'subject=App Feedback (v1.0.0)',
     );
+    _launchUri(emailLaunchUri);
   }
 
   void _rateApp() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Thank you! App store rating coming soon.')),
-    );
+    // Note: You'll need to replace these with your actual app store IDs.
+    const androidAppId = 'com.example.microrealeaste';
+    const iosAppId = '1234567890';
+
+    final Uri uri;
+    if (kIsWeb) {
+      // Cannot determine mobile OS on web, open a generic page or website
+      uri = Uri.parse('https://yourappwebsite.com/review');
+    } else if (Platform.isAndroid) {
+      uri = Uri.parse('https://play.google.com/store/apps/details?id=$androidAppId');
+    } else if (Platform.isIOS) {
+      uri = Uri.parse('https://apps.apple.com/app/id$iosAppId');
+    } else {
+      // Fallback for desktop or other platforms
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('App rating is not available on this platform.')),
+      );
+      return;
+    }
+    _launchUri(uri);
   }
 
   void _showAboutDialog() {
@@ -594,61 +697,13 @@ class _SettingsPageState extends ConsumerState<SettingsPage> {
   }
 
   void _showPrivacyPolicy() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Privacy Policy'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'MicroRealEstate Privacy Policy\n\n'
-            'Data Collection:\n'
-            'We only collect data that you explicitly enter into the app. This includes property information, tenant details, payment records, and maintenance requests.\n\n'
-            'Data Storage:\n'
-            'All data is stored locally on your device. We do not transmit your data to external servers.\n\n'
-            'Data Security:\n'
-            'Your data is protected by your device\'s security features. We recommend using device lock screens and regular backups.\n\n'
-            'Contact:\n'
-            'For privacy concerns, please contact us through the app feedback feature.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+    final uri = Uri.parse('https://www.freeprivacypolicy.com/live/your-policy-url'); // Replace with your actual URL
+    _launchUri(uri);
   }
 
   void _showTermsOfService() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Terms of Service'),
-        content: const SingleChildScrollView(
-          child: Text(
-            'MicroRealEstate Terms of Service\n\n'
-            'Acceptance of Terms:\n'
-            'By using this app, you agree to these terms of service.\n\n'
-            'Use License:\n'
-            'This app is licensed for personal and commercial property management use.\n\n'
-            'Disclaimer:\n'
-            'This app is provided "as is" without warranties. Users are responsible for data backup and accuracy.\n\n'
-            'Limitations:\n'
-            'The app developers are not liable for any data loss or business decisions made using this app.\n\n'
-            'Updates:\n'
-            'Terms may be updated periodically. Continued use constitutes acceptance of new terms.',
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: const Text('Close'),
-          ),
-        ],
-      ),
-    );
+    final uri = Uri.parse('https://www.termsofservicegenerator.net/live.php?token=your-token'); // Replace with your actual URL
+    _launchUri(uri);
   }
 
   void _signOut() {

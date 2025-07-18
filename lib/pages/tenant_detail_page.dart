@@ -6,6 +6,7 @@ import 'package:microrealeaste/database/models/tenant.dart';
 import 'package:microrealeaste/database/models/property.dart';
 import 'package:microrealeaste/database/models/rent_payment.dart';
 import 'package:microrealeaste/database/models/maintenance_request.dart';
+import 'package:microrealeaste/database/models/lease.dart';
 import 'package:microrealeaste/widgets/tabbed_section.dart';
 
 class TenantDetailPage extends StatefulWidget {
@@ -228,6 +229,39 @@ class _TenantDetailPageState extends State<TenantDetailPage> {
               ),
             ),
           ],
+          const SizedBox(height: 24),
+          Text('Leases', style: theme.textTheme.titleMedium),
+          const SizedBox(height: 8),
+          ..._tenant.leases.map((lease) => lease != null ? Card(
+            margin: const EdgeInsets.symmetric(vertical: 8),
+            child: ListTile(
+              title: Text('Lease: ${lease.startDate.year}/${lease.startDate.month}/${lease.startDate.day} - ${lease.endDate.year}/${lease.endDate.month}/${lease.endDate.day}'),
+              subtitle: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text('Rent: ${lease.rentAmount.toStringAsFixed(2)}'),
+                  Text('Security Deposit: ${lease.securityDeposit.toStringAsFixed(2)}'),
+                  Text('Signed: ${lease.digitallySigned ? "Yes" : "No"}'),
+                  Text('Auto Renew: ${lease.autoRenew ? "Yes" : "No"}'),
+                  if (lease.documentUrls.isNotEmpty)
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: lease.documentUrls.map((url) => Text('Doc: $url', style: const TextStyle(fontSize: 12))).toList(),
+                    ),
+                ],
+              ),
+              trailing: IconButton(
+                icon: const Icon(Icons.edit),
+                onPressed: () => _showEditLeaseDialog(lease),
+              ),
+            ),
+          ) : const SizedBox()),
+          const SizedBox(height: 8),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.add),
+            label: const Text('Add Lease'),
+            onPressed: _showAddLeaseDialog,
+          ),
         ],
       ),
     );
@@ -929,6 +963,206 @@ class _TenantDetailPageState extends State<TenantDetailPage> {
                 );
               },
               child: const Text('Add Payment'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showAddLeaseDialog() {
+    final leaseId = const Uuid().v4();
+    final startDateController = TextEditingController();
+    final endDateController = TextEditingController();
+    final rentController = TextEditingController();
+    final depositController = TextEditingController();
+    bool digitallySigned = false;
+    bool autoRenew = false;
+    List<String> documentUrls = [];
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Add Lease'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: startDateController,
+                  decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: endDateController,
+                  decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: rentController,
+                  decoration: const InputDecoration(labelText: 'Rent Amount'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: depositController,
+                  decoration: const InputDecoration(labelText: 'Security Deposit'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  value: digitallySigned,
+                  onChanged: (v) => setState(() => digitallySigned = v),
+                  title: const Text('Digitally Signed'),
+                ),
+                SwitchListTile(
+                  value: autoRenew,
+                  onChanged: (v) => setState(() => autoRenew = v),
+                  title: const Text('Auto Renew'),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Upload Document (URL)'),
+                  onPressed: () async {
+                    // For demo, just add a dummy URL
+                    setState(() => documentUrls.add('https://example.com/lease_$leaseId.pdf'));
+                  },
+                ),
+                ...documentUrls.map((url) => Text(url, style: const TextStyle(fontSize: 12))),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final lease = Lease(
+                  id: leaseId,
+                  propertyId: _tenant.propertyId,
+                  tenantId: _tenant.id,
+                  startDate: DateTime.parse(startDateController.text),
+                  endDate: DateTime.parse(endDateController.text),
+                  rentAmount: double.tryParse(rentController.text) ?? 0,
+                  securityDeposit: double.tryParse(depositController.text) ?? 0,
+                  digitallySigned: digitallySigned,
+                  autoRenew: autoRenew,
+                  documentUrls: documentUrls,
+                );
+                setState(() {
+                  _tenant = _tenant.copyWith(leases: [..._tenant.leases, lease]);
+                });
+                DataService.updateTenant(_tenant);
+                Navigator.pop(context);
+              },
+              child: const Text('Add Lease'),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showEditLeaseDialog(Lease lease) {
+    final startDateController = TextEditingController(text: lease.startDate.toIso8601String().split('T').first);
+    final endDateController = TextEditingController(text: lease.endDate.toIso8601String().split('T').first);
+    final rentController = TextEditingController(text: lease.rentAmount.toString());
+    final depositController = TextEditingController(text: lease.securityDeposit.toString());
+    bool digitallySigned = lease.digitallySigned;
+    bool autoRenew = lease.autoRenew;
+    List<String> documentUrls = List.from(lease.documentUrls);
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setState) => AlertDialog(
+          title: const Text('Edit Lease'),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: startDateController,
+                  decoration: const InputDecoration(labelText: 'Start Date (YYYY-MM-DD)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: endDateController,
+                  decoration: const InputDecoration(labelText: 'End Date (YYYY-MM-DD)'),
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: rentController,
+                  decoration: const InputDecoration(labelText: 'Rent Amount'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                TextField(
+                  controller: depositController,
+                  decoration: const InputDecoration(labelText: 'Security Deposit'),
+                  keyboardType: TextInputType.number,
+                ),
+                const SizedBox(height: 8),
+                SwitchListTile(
+                  value: digitallySigned,
+                  onChanged: (v) => setState(() => digitallySigned = v),
+                  title: const Text('Digitally Signed'),
+                ),
+                SwitchListTile(
+                  value: autoRenew,
+                  onChanged: (v) => setState(() => autoRenew = v),
+                  title: const Text('Auto Renew'),
+                ),
+                const SizedBox(height: 8),
+                ElevatedButton.icon(
+                  icon: const Icon(Icons.upload_file),
+                  label: const Text('Upload Document (URL)'),
+                  onPressed: () async {
+                    setState(() => documentUrls.add('https://example.com/lease_${lease.id}.pdf'));
+                  },
+                ),
+                ...documentUrls.map((url) => Row(
+                  children: [
+                    Expanded(child: Text(url, style: const TextStyle(fontSize: 12))),
+                    IconButton(
+                      icon: const Icon(Icons.delete, size: 16),
+                      onPressed: () => setState(() => documentUrls.remove(url)),
+                    ),
+                  ],
+                )),
+              ],
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              onPressed: () {
+                final updatedLease = Lease(
+                  id: lease.id,
+                  propertyId: lease.propertyId,
+                  tenantId: lease.tenantId,
+                  startDate: DateTime.parse(startDateController.text),
+                  endDate: DateTime.parse(endDateController.text),
+                  rentAmount: double.tryParse(rentController.text) ?? 0,
+                  securityDeposit: double.tryParse(depositController.text) ?? 0,
+                  digitallySigned: digitallySigned,
+                  autoRenew: autoRenew,
+                  documentUrls: documentUrls,
+                );
+                setState(() {
+                  _tenant = _tenant.copyWith(
+                    leases: _tenant.leases.map((l) => l.id == lease.id ? updatedLease : l).toList(),
+                  );
+                });
+                DataService.updateTenant(_tenant);
+                Navigator.pop(context);
+              },
+              child: const Text('Save Changes'),
             ),
           ],
         ),

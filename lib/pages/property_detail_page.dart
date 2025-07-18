@@ -7,17 +7,19 @@ import 'package:microrealeaste/database/models/tenant.dart';
 import 'package:microrealeaste/database/models/maintenance_request.dart';
 import 'package:microrealeaste/pages/tenant_detail_page.dart';
 import 'package:microrealeaste/widgets/tabbed_section.dart';
+import 'package:microrealeaste/providers/auth_provider.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-class PropertyDetailPage extends StatefulWidget {
+class PropertyDetailPage extends ConsumerStatefulWidget {
   final Property property;
 
   const PropertyDetailPage({super.key, required this.property});
 
   @override
-  State<PropertyDetailPage> createState() => _PropertyDetailPageState();
+  ConsumerState<PropertyDetailPage> createState() => _PropertyDetailPageState();
 }
 
-class _PropertyDetailPageState extends State<PropertyDetailPage> {
+class _PropertyDetailPageState extends ConsumerState<PropertyDetailPage> {
   List<Tenant> _tenants = [];
   List<MaintenanceRequest> _maintenanceRequests = [];
   late Property _property;
@@ -42,6 +44,9 @@ class _PropertyDetailPageState extends State<PropertyDetailPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = ref.read(currentUserProvider);
+    final currentOrgId = user?.currentOrganizationId;
+    final canManageProperties = user?.canManageProperties ?? false;
     
     return Scaffold(
       backgroundColor: theme.colorScheme.surface,

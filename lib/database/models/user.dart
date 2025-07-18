@@ -13,6 +13,14 @@ class User {
   final bool emailVerified;
   final DateTime createdAt;
   final DateTime updatedAt;
+  /// User role per organization
+  final Map<String, UserRole> rolesByOrg;
+  /// List of organization IDs the user belongs to
+  final List<String> organizationIds;
+  /// The currently active organization for the user
+  final String? currentOrganizationId;
+  /// Whether the user wants to receive notifications
+  final bool notificationsEnabled;
 
   User({
     required this.id,
@@ -27,6 +35,10 @@ class User {
     this.emailVerified = false,
     required this.createdAt,
     required this.updatedAt,
+    this.rolesByOrg = const {},
+    this.organizationIds = const [],
+    this.currentOrganizationId,
+    this.notificationsEnabled = true,
   });
 
   Map<String, dynamic> toJson() {
@@ -43,6 +55,10 @@ class User {
       'emailVerified': emailVerified,
       'createdAt': createdAt.toIso8601String(),
       'updatedAt': updatedAt.toIso8601String(),
+      'rolesByOrg': rolesByOrg.map((k, v) => MapEntry(k, v.name)),
+      'organizationIds': organizationIds,
+      'currentOrganizationId': currentOrganizationId,
+      'notificationsEnabled': notificationsEnabled,
     };
   }
 
@@ -60,6 +76,10 @@ class User {
       emailVerified: json['emailVerified'] ?? false,
       createdAt: DateTime.parse(json['createdAt']),
       updatedAt: DateTime.parse(json['updatedAt']),
+      rolesByOrg: (json['rolesByOrg'] as Map<String, dynamic>? ?? {}).map((k, v) => MapEntry(k, UserRole.values.firstWhere((e) => e.name == v))),
+      organizationIds: (json['organizationIds'] as List<dynamic>? ?? []).map((e) => e as String).toList(),
+      currentOrganizationId: json['currentOrganizationId'],
+      notificationsEnabled: json['notificationsEnabled'] ?? true,
     );
   }
 
@@ -76,6 +96,10 @@ class User {
     bool? emailVerified,
     DateTime? createdAt,
     DateTime? updatedAt,
+    Map<String, UserRole>? rolesByOrg,
+    List<String>? organizationIds,
+    String? currentOrganizationId,
+    bool? notificationsEnabled,
   }) {
     return User(
       id: id ?? this.id,
@@ -90,6 +114,10 @@ class User {
       emailVerified: emailVerified ?? this.emailVerified,
       createdAt: createdAt ?? this.createdAt,
       updatedAt: updatedAt ?? this.updatedAt,
+      rolesByOrg: rolesByOrg ?? this.rolesByOrg,
+      organizationIds: organizationIds ?? this.organizationIds,
+      currentOrganizationId: currentOrganizationId ?? this.currentOrganizationId,
+      notificationsEnabled: notificationsEnabled ?? this.notificationsEnabled,
     );
   }
 

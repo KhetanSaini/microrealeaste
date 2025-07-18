@@ -51,12 +51,17 @@ class _PropertiesPageState extends ConsumerState<PropertiesPage> {
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = ref.watch(currentUserProvider);
+    final currentOrgId = user?.currentOrganizationId;
+    final canManageProperties = user?.canManageProperties ?? false;
     return Scaffold(
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: _showAddPropertyDialog,
-        icon: const Icon(Icons.add),
-        label: const Text('Add Property'),
-      ),
+      floatingActionButton: canManageProperties
+          ? FloatingActionButton.extended(
+              onPressed: _showAddPropertyDialog,
+              icon: const Icon(Icons.add),
+              label: const Text('Add Property'),
+            )
+          : null,
       body: FrameworkPage(
         title: 'Properties',
         slivers: [
@@ -185,34 +190,38 @@ class _PropertiesPageState extends ConsumerState<PropertiesPage> {
     final tenants = DataService.getTenantsByProperty(property.id);
     final borderRadius = isTablet ? 20.0 : 16.0;
     final padding = isTablet ? 20.0 : 16.0;
+    final user = ref.read(currentUserProvider);
+    final canManageProperties = user?.canManageProperties ?? false;
 
     return GestureDetector(
-      onLongPress: () {
-        showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Delete Property'),
-            content: const Text('Are you sure you want to delete this property?'),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: const Text('Cancel'),
-              ),
-              TextButton(
-                onPressed: () async {
-                  await DataService.deleteProperty(property.id);
-                  _loadProperties();
-                  if (mounted) Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Property deleted')),
-                  );
-                },
-                child: const Text('Delete', style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
-        );
-      },
+      onLongPress: canManageProperties
+          ? () {
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Delete Property'),
+                  content: const Text('Are you sure you want to delete this property?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(context),
+                      child: const Text('Cancel'),
+                    ),
+                    TextButton(
+                      onPressed: () async {
+                        await DataService.deleteProperty(property.id);
+                        _loadProperties();
+                        if (mounted) Navigator.pop(context);
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Property deleted')),
+                        );
+                      },
+                      child: const Text('Delete', style: TextStyle(color: Colors.red)),
+                    ),
+                  ],
+                ),
+              );
+            }
+          : null,
       child: Card(
         margin: EdgeInsets.only(bottom: isTablet ? 16 : 12),
         elevation: 0,

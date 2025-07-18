@@ -185,7 +185,6 @@ class LoginPage extends HookConsumerWidget {
                               ),
                               
                               const SizedBox(height: 24),
-                              
                               // Login Button
                               ElevatedButton(
                                 onPressed: authState.isLoading
@@ -218,6 +217,49 @@ class LoginPage extends HookConsumerWidget {
                                         ),
                                       ),
                               ),
+                              const SizedBox(height: 12),
+                             Align(
+                               alignment: Alignment.centerRight,
+                               child: TextButton(
+                                 onPressed: () => _showPasswordResetDialog(context),
+                                 child: const Text('Forgot Password?'),
+                               ),
+                             ),
+                              const SizedBox(height: 16),
+                             Row(
+                               children: [
+                                 const Expanded(child: Divider()),
+                                 Padding(
+                                   padding: EdgeInsets.symmetric(horizontal: 8),
+                                   child: Text('or sign in with'),
+                                 ),
+                                 const Expanded(child: Divider()),
+                               ],
+                             ),
+                             const SizedBox(height: 16),
+                             SingleChildScrollView(
+                               scrollDirection: Axis.horizontal,
+                               child: Row(
+                                 mainAxisAlignment: MainAxisAlignment.center,
+                                 children: [
+                                   IconButton(
+                                     icon: Image.asset('assets/icons/google.png', height: 32),
+                                     onPressed: () {
+                                       // TODO: Implement Google sign-in
+                                     },
+                                     tooltip: 'Sign in with Google',
+                                   ),
+                                   const SizedBox(width: 24),
+                                   IconButton(
+                                     icon: Image.asset('assets/icons/facebook.png', height: 32),
+                                     onPressed: () {
+                                       // TODO: Implement Facebook sign-in
+                                     },
+                                     tooltip: 'Sign in with Facebook',
+                                   ),
+                                 ],
+                               ),
+                             ),
                               
                               const SizedBox(height: 16),
                               
@@ -276,4 +318,33 @@ class LoginPage extends HookConsumerWidget {
       ),
     );
   }
+} 
+
+void _showPasswordResetDialog(BuildContext context) {
+  final emailController = TextEditingController();
+  showDialog(
+    context: context,
+    builder: (context) => AlertDialog(
+      title: const Text('Reset Password'),
+      content: TextField(
+        controller: emailController,
+        decoration: const InputDecoration(labelText: 'Enter your email'),
+      ),
+      actions: [
+        TextButton(
+          onPressed: () => Navigator.pop(context),
+          child: const Text('Cancel'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Navigator.pop(context);
+            ScaffoldMessenger.of(context).showSnackBar(
+              const SnackBar(content: Text('If this email exists, a reset link will be sent.')),
+            );
+          },
+          child: const Text('Send Reset Link'),
+        ),
+      ],
+    ),
+  );
 } 

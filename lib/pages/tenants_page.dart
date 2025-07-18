@@ -9,6 +9,7 @@ import 'package:microrealeaste/widgets/framework_page.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:microrealeaste/providers/app_providers.dart';
 import '../database/models/property.dart';
+import 'package:microrealeaste/providers/auth_provider.dart';
 
 class TenantsPage extends ConsumerStatefulWidget {
   const TenantsPage({super.key});
@@ -54,12 +55,17 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = ref.watch(currentUserProvider);
+    final currentOrgId = user?.currentOrganizationId;
+    final canManageTenants = user?.canManageTenants ?? false;
     return Scaffold(
-      floatingActionButton: FloatingActionButton(
-        onPressed: _showAddTenantDialog,
-        child: const Icon(Icons.add),
-        tooltip: 'Add Tenant',
-      ),
+      floatingActionButton: canManageTenants
+          ? FloatingActionButton.extended(
+              onPressed: _showAddTenantDialog,
+              icon: const Icon(Icons.person_add),
+              label: const Text('Add Tenant'),
+            )
+          : null,
       body: FrameworkPage(
         title: 'Tenants',
         slivers: [
@@ -179,6 +185,8 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
 
   Widget _buildTenantCard(Tenant tenant, {bool isTablet = false}) {
     final theme = Theme.of(context);
+    final user = ref.read(currentUserProvider);
+    final canManageTenants = user?.canManageTenants ?? false;
     final payments = DataService.getPaymentsByTenant(tenant.id);
     final overdueCount = payments.where((p) => p.isOverdue).length;
     final maintenanceCount = DataService.getRequestsByTenant(tenant.id)
@@ -202,7 +210,7 @@ class _TenantsPageState extends ConsumerState<TenantsPage> with TickerProviderSt
         child: InkWell(
           borderRadius: BorderRadius.circular(borderRadius),
           onTap: () => _showTenantDetails(tenant),
-          onLongPress: () => _showDeleteTenantConfirmation(tenant),
+          onLongPress: canManageTenants ? () => _showDeleteTenantConfirmation(tenant) : null,
           child: Padding(
             padding: EdgeInsets.all(padding),
             child: Column(

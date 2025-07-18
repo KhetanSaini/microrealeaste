@@ -6,15 +6,17 @@ import '../database/models/maintenance_request.dart';
 import '../database/models/tenant.dart';
 import '../widgets/maintenance_card.dart';
 import '../widgets/framework_page.dart';
+import 'package:microrealeaste/providers/auth_provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-class MaintenancePage extends StatefulWidget {
+class MaintenancePage extends ConsumerStatefulWidget {
   const MaintenancePage({super.key});
 
   @override
-  State<MaintenancePage> createState() => _MaintenancePageState();
+  ConsumerState<MaintenancePage> createState() => _MaintenancePageState();
 }
 
-class _MaintenancePageState extends State<MaintenancePage> with TickerProviderStateMixin {
+class _MaintenancePageState extends ConsumerState<MaintenancePage> with TickerProviderStateMixin {
   List<MaintenanceRequest> _requests = [];
   List<Tenant> _tenants = [];
   bool _isLoading = true;
@@ -69,6 +71,9 @@ class _MaintenancePageState extends State<MaintenancePage> with TickerProviderSt
   @override
   Widget build(BuildContext context) {
     final theme = Theme.of(context);
+    final user = ref.watch(currentUserProvider);
+    final currentOrgId = user?.currentOrganizationId;
+    final canManageMaintenance = user?.canManageMaintenance ?? false;
     if (_isLoading) {
       return FrameworkPage(
         title: 'Maintenance',

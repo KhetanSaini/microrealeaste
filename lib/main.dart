@@ -11,6 +11,7 @@ import 'package:microrealeaste/pages/more_page.dart';
 import 'package:microrealeaste/providers/app_providers.dart';
 import 'package:microrealeaste/providers/auth_provider.dart';
 import 'package:microrealeaste/providers/theme_provider.dart';
+import 'package:microrealeaste/database/models/organization.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -69,8 +70,33 @@ class MainNavigationPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final currentIndex = ref.watch(selectedNavIndexProvider);
     final theme = Theme.of(context);
-
+    final user = ref.watch(currentUserProvider);
+    final orgs = user?.organizationIds ?? [];
+    final currentOrgId = user?.currentOrganizationId;
+    final allOrgs = orgs.map((id) => DataService.getOrganizationById(id)).whereType<Organization>().toList();
     return Scaffold(
+      appBar: (orgs.length > 1)
+          ? AppBar(
+              title: Text('MicroRealEstate'),
+              actions: [
+                DropdownButton<String>(
+                  value: currentOrgId,
+                  items: allOrgs.map((org) => DropdownMenuItem(
+                    value: org.id,
+                    child: Text(org.name),
+                  )).toList(),
+                  onChanged: (value) async {
+                    if (user != null && value != null && value != user.currentOrganizationId) {
+                      final updatedUser = user.copyWith(currentOrganizationId: value);
+                      await ref.read(authProvider.notifier).updateProfile(updatedUser);
+                    }
+                  },
+                  underline: const SizedBox(),
+                  icon: const Icon(Icons.business),
+                ),
+              ],
+            )
+          : null,
       body: IndexedStack(
         index: currentIndex,
         children: _pages,
